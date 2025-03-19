@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thresholding Image</title>
+
+    <style>
+      canvas {
+        border: 1px solid red;
+      }
+
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <input value="0" type="range" min="0" max="255" id="threshold-input" />
+    <br />
+
+    <div class="container">
+      <div>
+        <p>original</p>
+        <canvas id="original-canvas"></canvas>
+      </div>
+
+      <div>
+        <p>grayscale</p>
+        <canvas id="grayscale-canvas"></canvas>
+      </div>
+
+      <div>
+        <p>threshold</p>
+        <canvas id="threshold-canvas"></canvas>
+      </div>
+    </div>
+
+    <script>
+      const thresholdInput = document.querySelector("#threshold-input");
+
+      const original = document.getElementById("original-canvas");
+      const grayscale = document.getElementById("grayscale-canvas");
+      const threshold = document.getElementById("threshold-canvas");
+
+      const canvases = [original, grayscale, threshold];
+
+      const originalCtx = original.getContext("2d");
+      const grayscaleCtx = grayscale.getContext("2d");
+      const thresholdCtx = threshold.getContext("2d");
+
+      thresholdInput.addEventListener("change", applyThreshold);
+
+      const img = new Image();
+      //   img.src = "./test2.png";
+      img.src = "./test.jpg";
+
+      img.addEventListener("load", () => {
+        drawImageToCanvas(img);
+      });
+
+      function drawImageToCanvas(img) {
+        canvases.forEach((canvas) => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        });
+        originalCtx.drawImage(img, 0, 0);
+        drawGrayscale(img);
+        applyThreshold();
+      }
+
+      function drawGrayscale(img) {
+        const imageData = originalCtx.getImageData(
+          0,
+          0,
+          original.width,
+          original.height
+        );
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = avg; // Red
+          data[i + 1] = avg; // Green
+          data[i + 2] = avg; // Blue
+        }
+        console.log(data);
+
+        grayscaleCtx.putImageData(imageData, 0, 0);
+      }
+
+      function applyThreshold() {
+        const threshold = thresholdInput.value;
+
+        const imageData = originalCtx.getImageData(
+          0,
+          0,
+          original.width,
+          original.height
+        );
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = data[i + 1] = data[i + 2] = avg >= threshold ? 255 : 0;
+        }
+
+        thresholdCtx.putImageData(imageData, 0, 0);
+      }
+    </script>
+  </body>
+</html>
