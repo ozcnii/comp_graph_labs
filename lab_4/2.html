@@ -36,6 +36,11 @@
         <p>threshold</p>
         <canvas id="threshold-canvas"></canvas>
       </div>
+
+      <div>
+        <p>sobel</p>
+        <canvas id="sobel-canvas"></canvas>
+      </div>
     </div>
 
     <script>
@@ -44,17 +49,18 @@
       const original = document.getElementById("original-canvas");
       const grayscale = document.getElementById("grayscale-canvas");
       const threshold = document.getElementById("threshold-canvas");
+      const sobel = document.getElementById("sobel-canvas");
 
-      const canvases = [original, grayscale, threshold];
+      const canvases = [original, grayscale, threshold, sobel];
 
       const originalCtx = original.getContext("2d");
       const grayscaleCtx = grayscale.getContext("2d");
       const thresholdCtx = threshold.getContext("2d");
+      const sobelCtx = sobel.getContext("2d");
 
       thresholdInput.addEventListener("change", applyThreshold);
 
       const img = new Image();
-      //   img.src = "./test2.png";
       img.src = "./test.jpg";
 
       img.addEventListener("load", () => {
@@ -69,6 +75,7 @@
         originalCtx.drawImage(img, 0, 0);
         drawGrayscale(img);
         applyThreshold();
+        applySobel();
       }
 
       function drawGrayscale(img) {
@@ -86,13 +93,12 @@
           data[i + 1] = avg; // Green
           data[i + 2] = avg; // Blue
         }
-        console.log(data);
 
         grayscaleCtx.putImageData(imageData, 0, 0);
       }
 
       function applyThreshold() {
-        const threshold = thresholdInput.value;
+        const thresholdValue = thresholdInput.value;
 
         const imageData = originalCtx.getImageData(
           0,
@@ -104,10 +110,64 @@
 
         for (let i = 0; i < data.length; i += 4) {
           let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          data[i] = data[i + 1] = data[i + 2] = avg >= threshold ? 255 : 0;
+          data[i] = data[i + 1] = data[i + 2] = avg >= thresholdValue ? 255 : 0;
         }
 
         thresholdCtx.putImageData(imageData, 0, 0);
+      }
+
+      function applySobel() {
+        const imageData = grayscaleCtx.getImageData(
+          0,
+          0,
+          grayscale.width,
+          grayscale.height
+        );
+        const data = imageData.data;
+        const width = grayscale.width;
+        const height = grayscale.height;
+
+        const sobelData = new ImageData(width, height);
+        const sobelPixels = sobelData.data;
+
+        const kernelX = [
+          [-1, 0, 1],
+          [-2, 0, 2],
+          [-1, 0, 1],
+        ];
+
+        const kernelY = [
+          [-1, -2, -1],
+          [0, 0, 0],
+          [1, 2, 1],
+        ];
+
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            let sumX = 0;
+            let sumY = 0;
+
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
+                const gray = data[pixelIndex];
+
+                sumX += gray * kernelX[ky + 1][kx + 1];
+                sumY += gray * kernelY[ky + 1][kx + 1];
+              }
+            }
+
+            const sobelIndex = (y * width + x) * 4;
+            const magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+
+            sobelPixels[sobelIndex] = magnitude;
+            sobelPixels[sobelIndex + 1] = magnitude;
+            sobelPixels[sobelIndex + 2] = magnitude;
+            sobelPixels[sobelIndex + 3] = 255;
+          }
+        }
+
+        sobelCtx.putImageData(sobelData, 0, 0);
       }
     </script>
   </body>
