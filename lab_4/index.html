@@ -98,7 +98,7 @@
         originalCtx.drawImage(img, 0, 0);
         drawGrayscale(img);
         applyThreshold();
-        applySobel();
+        applySobel(A, B, M, N);
       }
 
       function drawGrayscale(img) {
@@ -143,47 +143,62 @@
         thresholdCtx.putImageData(imageData, 0, 0);
       }
 
-      function applySobel() {
-        const imageData = grayscaleCtx.getImageData(
+      const A = 0;
+      const B = 1 / 4;
+      const M = [
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1],
+      ];
+      const N = 1;
+
+      function applySobel(A, B, M, N = 1) {
+        const imageData = originalCtx.getImageData(
           0,
           0,
-          grayscale.width,
-          grayscale.height
+          original.width,
+          original.height
         );
         const data = imageData.data;
-        const width = grayscale.width;
-        const height = grayscale.height;
+        const width = original.width;
+        const height = original.height;
 
         const output = new ImageData(width, height);
         const outputData = output.data;
 
-        const sobelMatrix = [
-          [-1, 0, 1],
-          [-2, 0, 2],
-          [-1, 0, 1],
-        ];
+        const size = 2 * N + 1;
 
-        for (let y = 1; y < height - 1; y++) {
-          for (let x = 1; x < width - 1; x++) {
-            let gx = 0;
+        const grayscale = new Array(original.width * original.height);
+        for (let i = 0; i < data.length; i += 4) {
+          grayscale[i / 4] =
+            0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        }
 
-            for (let ky = -1; ky <= 1; ky++) {
-              for (let kx = -1; kx <= 1; kx++) {
-                const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
-                const brightness = data[pixelIndex];
-                const weight = sobelMatrix[ky + 1][kx + 1];
-                gx += brightness * weight;
+        for (let y = N; y < original.height - N; y++) {
+          for (let x = N; x < original.width - N; x++) {
+            let sum = 0;
+
+            // C(X+i, Y+j) * M(i, j)
+            for (let i = -N; i <= N; i++) {
+              for (let j = -N; j <= N; j++) {
+                const pixelX = x + j;
+                const pixelY = y + i;
+                const idx = pixelY * original.width + pixelX;
+
+                const matrixValue = M[i + N][j + N];
+                sum += grayscale[idx] * matrixValue;
               }
             }
 
-            gx = Math.abs(gx / 4); // B = 1/4
-            gx = Math.min(255, Math.max(0, gx));
+            let newValue = A + B * sum;
+            newValue = Math.max(0, Math.min(255, newValue));
 
-            const outputIndex = (y * width + x) * 4;
-            outputData[outputIndex] = gx;
-            outputData[outputIndex + 1] = gx;
-            outputData[outputIndex + 2] = gx;
-            outputData[outputIndex + 3] = 255;
+            const pos = (y * original.width + x) * 4;
+            outputData[pos] =
+              outputData[pos + 1] =
+              outputData[pos + 2] =
+                newValue;
+            outputData[pos + 3] = 255;
           }
         }
 
