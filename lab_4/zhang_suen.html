@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Алгоритм Зонга-Суена</title>
+    <style>
+      canvas {
+        border: 1px solid #ccc;
+      }
+      .container {
+        display: flex;
+        gap: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Алгоритм Зонга-Суена</h2>
+    <input type="file" id="imageInput" accept="image/*" />
+
+    <div class="container">
+      <div>
+        <h3>Оригинал</h3>
+        <canvas id="originalCanvas"></canvas>
+      </div>
+      <div>
+        <h3>Результат</h3>
+        <canvas id="resultCanvas"></canvas>
+      </div>
+    </div>
+
+    <script>
+      const imageInput = document.getElementById("imageInput");
+      const originalCanvas = document.getElementById("originalCanvas");
+      const resultCanvas = document.getElementById("resultCanvas");
+
+      imageInput.addEventListener("change", function (e) {
+        if (!e.target.files.length) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+          const img = new Image();
+          img.onload = function () {
+            originalCanvas.width = resultCanvas.width = img.width;
+            originalCanvas.height = resultCanvas.height = img.height;
+
+            const originalCtx = originalCanvas.getContext("2d");
+            originalCtx.drawImage(img, 0, 0);
+
+            processImage(img);
+          };
+          img.src = event.target.result;
+        };
+
+        reader.readAsDataURL(e.target.files[0]);
+      });
+
+      function processImage(img) {
+        const ctx = resultCanvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        zhangSuenThinning(resultCanvas);
+      }
+
+      function zhangSuenThinning(canvas) {
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+
+        let binary = new Array(height);
+        for (let y = 0; y < height; y++) {
+          binary[y] = new Array(width);
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const gray =
+              0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+            binary[y][x] = gray < 128 ? 1 : 0;
+          }
+        }
+
+        let changed;
+        do {
+          changed = false;
+          for (let subIter = 0; subIter < 2; subIter++) {
+            const toRemove = [];
+
+            for (let y = 1; y < height - 1; y++) {
+              for (let x = 1; x < width - 1; x++) {
+                if (binary[y][x] !== 1) continue;
+
+                const p2 = binary[y - 1][x];
+                const p3 = binary[y - 1][x + 1];
+                const p4 = binary[y][x + 1];
+                const p5 = binary[y + 1][x + 1];
+                const p6 = binary[y + 1][x];
+                const p7 = binary[y + 1][x - 1];
+                const p8 = binary[y][x - 1];
+                const p9 = binary[y - 1][x - 1];
+
+                const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+                if (B < 2 || B > 6) continue;
+
+                let A = 0;
+                if (p2 === 0 && p3 === 1) A++;
+                if (p3 === 0 && p4 === 1) A++;
+                if (p4 === 0 && p5 === 1) A++;
+                if (p5 === 0 && p6 === 1) A++;
+                if (p6 === 0 && p7 === 1) A++;
+                if (p7 === 0 && p8 === 1) A++;
+                if (p8 === 0 && p9 === 1) A++;
+                if (p9 === 0 && p2 === 1) A++;
+
+                if (A !== 1) continue;
+
+                if (subIter === 0) {
+                  if (p2 * p4 * p6 !== 0) continue;
+                  if (p4 * p6 * p8 !== 0) continue;
+                } else {
+                  if (p2 * p4 * p8 !== 0) continue;
+                  if (p2 * p6 * p8 !== 0) continue;
+                }
+
+                toRemove.push({ x, y });
+              }
+            }
+
+            if (toRemove.length > 0) {
+              changed = true;
+              for (const p of toRemove) {
+                binary[p.y][p.x] = 0;
+              }
+            }
+          }
+        } while (changed);
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const val = binary[y][x] ? 0 : 255;
+            data[idx] = data[idx + 1] = data[idx + 2] = val;
+            data[idx + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      }
+    </script>
+  </body>
+</html>

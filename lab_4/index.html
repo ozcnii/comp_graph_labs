@@ -23,11 +23,14 @@
     </style>
   </head>
   <body>
+    <a href="./zhang_suen.html">Алгоритм Зонга-Суена</a>
+    <br />
+    <a href="./heuristic.html">Эвристический алгоритм утончения линий</a>
+    <br />
+    <br />
+
     <div class="controls">
       <input type="file" id="file-input" accept="image/*" />
-      <br /><br />
-      <label for="threshold-input">Threshold: </label>
-      <input value="0" type="range" min="0" max="255" id="threshold-input" />
     </div>
 
     <div class="container">
@@ -37,23 +40,30 @@
       </div>
 
       <div>
-        <p>grayscale</p>
+        <p>grayscale (Задание 1)</p>
         <canvas id="grayscale-canvas"></canvas>
       </div>
 
       <div>
-        <p>threshold</p>
+        <p>threshold (Задание 2)</p>
         <canvas id="threshold-canvas"></canvas>
+        <br />
+
+        <label for="threshold-input"
+          >Threshold: <span id="threshold-value">0</span></label
+        >
+        <input value="0" type="range" min="0" max="255" id="threshold-input" />
       </div>
 
       <div>
-        <p>sobel</p>
+        <p>sobel (Задание 3)</p>
         <canvas id="sobel-canvas"></canvas>
       </div>
     </div>
 
     <script>
       const thresholdInput = document.querySelector("#threshold-input");
+      const thresholdValueEl = document.querySelector("#threshold-value");
       const fileInput = document.querySelector("#file-input");
 
       const original = document.getElementById("original-canvas");
@@ -122,6 +132,7 @@
 
       function applyThreshold() {
         const thresholdValue = thresholdInput.value;
+        thresholdValueEl.textContent = thresholdValue;
 
         const imageData = originalCtx.getImageData(
           0,

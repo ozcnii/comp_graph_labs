@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Эвристический алгоритм утончения линий</title>
+    <style>
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      canvas {
+        border: 1px solid #ddd;
+        max-width: 100%;
+      }
+
+      .param-control {
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Эвристический алгоритм утончения линий</h1>
+
+    <div class="controls">
+      <input type="file" id="imageInput" accept="image/*" />
+
+      <div class="param-control">
+        <label for="f1">Параметр F1:</label>
+        <input type="range" id="f1" min="-50" max="50" value="-10" />
+        <span id="f1Value" class="value-display">-10</span>
+      </div>
+
+      <div class="param-control">
+        <label for="f2">Параметр F2:</label>
+        <input type="range" id="f2" min="-100" max="100" value="10" />
+        <span id="f2Value" class="value-display">10</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="canvas-box">
+        <h3>Оригинал</h3>
+        <canvas id="originalCanvas"></canvas>
+      </div>
+      <div class="canvas-box">
+        <h3>Утонченное</h3>
+        <canvas id="thinnedCanvas"></canvas>
+      </div>
+    </div>
+
+    <script>
+      const imageInput = document.getElementById("imageInput");
+      const processBtn = document.getElementById("processBtn");
+      const f1Slider = document.getElementById("f1");
+      const f1Value = document.getElementById("f1Value");
+      const f2Slider = document.getElementById("f2");
+      const f2Value = document.getElementById("f2Value");
+
+      const originalCanvas = document.getElementById("originalCanvas");
+      const thinnedCanvas = document.getElementById("thinnedCanvas");
+
+      let originalImage = null;
+
+      f1Slider.addEventListener("input", () => {
+        f1Value.textContent = f1Slider.value;
+        processImage();
+      });
+      f2Slider.addEventListener("input", () => {
+        f2Value.textContent = f2Slider.value;
+        processImage();
+      });
+
+      function processImage() {
+        if (!originalImage) {
+          alert("Пожалуйста, загрузите изображение сначала");
+          return;
+        }
+
+        const threshold = 128;
+        const F1 = parseInt(f1Slider.value);
+        const F2 = parseInt(f2Slider.value);
+
+        console.log(F1, F2);
+
+        const binaryImage = binarizeImage(originalCanvas, threshold);
+
+        const thinnedImage = heuristicThinning(binaryImage, F1, F2);
+        displayBinaryImage(thinnedCanvas, thinnedImage);
+      }
+
+      imageInput.addEventListener("change", function (e) {
+        if (!e.target.files.length) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          originalImage = new Image();
+          originalImage.onload = function () {
+            const width = originalImage.width;
+            const height = originalImage.height;
+
+            originalCanvas.width = thinnedCanvas.width = width;
+            originalCanvas.height = thinnedCanvas.height = height;
+
+            const originalCtx = originalCanvas.getContext("2d");
+            originalCtx.drawImage(originalImage, 0, 0);
+
+            processImage();
+          };
+          originalImage.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      });
+
+      function displayBinaryImage(canvas, binary) {
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+        const imageData = ctx.createImageData(width, height);
+        const data = imageData.data;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const val = binary[y][x] ? 0 : 255;
+            data[idx] = data[idx + 1] = data[idx + 2] = val;
+            data[idx + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      function binarizeImage(canvas, threshold) {
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+
+        const binary = new Array(height);
+        for (let y = 0; y < height; y++) {
+          binary[y] = new Array(width);
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const gray =
+              0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+            binary[y][x] = gray < threshold ? 1 : 0;
+          }
+        }
+
+        return binary;
+      }
+
+      function heuristicThinning(binary, F1, F2) {
+        const height = binary.length;
+        const width = binary[0].length;
+
+        const thinned = binary.map((row) => [...row]);
+
+        // локальная плотность
+        const d = new Array(height);
+        for (let y = 0; y < height; y++) {
+          d[y] = new Array(width);
+
+          for (let x = 0; x < width; x++) {
+            let dVal = 0;
+            for (let i = -1; i <= 1; i++) {
+              for (let j = -1; j <= 1; j++) {
+                const ny = y + i;
+                const nx = x + j;
+                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                  dVal += binary[ny][nx] - binary[y][x];
+                }
+              }
+            }
+            d[y][x] = dVal;
+          }
+        }
+
+        // плотность локальных плотностей
+        const D = new Array(height);
+        for (let y = 0; y < height; y++) {
+          D[y] = new Array(width);
+          for (let x = 0; x < width; x++) {
+            let DVal = 0;
+            for (let i = -1; i <= 1; i++) {
+              for (let j = -1; j <= 1; j++) {
+                const ny = y + i;
+                const nx = x + j;
+                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                  DVal += d[ny][nx] - d[y][x];
+                }
+              }
+            }
+            D[y][x] = DVal;
+          }
+        }
+
+        console.table(d);
+        console.table(D);
+        console.log("____________");
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (binary[y][x] === 1) {
+              if (d[y][x] <= F1 || D[y][x] <= F2) {
+                thinned[y][x] = 0;
+              }
+            }
+          }
+        }
+
+        return thinned;
+      }
+    </script>
+  </body>
+</html>
