@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Алгоритм Брезенхема для окружности</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .input-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      canvas {
+        border: 1px solid #000;
+      }
+      button {
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+      .algorithm-info {
+        background-color: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Алгоритм Брезенхема для построения окружности</h1>
+
+      <div class="input-group">
+        <label>Центр (x, y):</label>
+        <input type="number" id="xc" placeholder="x" value="300" />
+        <input type="number" id="yc" placeholder="y" value="200" />
+      </div>
+
+      <div class="input-group">
+        <label>Радиус:</label>
+        <input type="number" id="radius" placeholder="радиус" value="100" />
+      </div>
+
+      <button id="drawBtn">Нарисовать окружность</button>
+
+      <canvas id="canvas" width="600" height="400"></canvas>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const xcInput = document.getElementById("xc");
+      const ycInput = document.getElementById("yc");
+      const radiusInput = document.getElementById("radius");
+      const drawBtn = document.getElementById("drawBtn");
+
+      function drawPixel(x, y) {
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      function drawCircleBresenham(xc, yc, radius) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "black";
+
+        let x = 0;
+        let y = radius;
+        let d = 3 - 2 * radius;
+
+        while (y >= x) {
+          draw8Pixels(xc, yc, x, y);
+          if (d <= 0) {
+            d = d + 4 * x + 6;
+          } else {
+            d = d + 4 * (x - y) + 10;
+            y = y - 1;
+          }
+          x = x + 1;
+        }
+      }
+
+      function draw8Pixels(xc, yc, x, y) {
+        drawPixel(xc + x, yc + y);
+        drawPixel(xc - x, yc + y);
+        drawPixel(xc + x, yc - y);
+        drawPixel(xc - x, yc - y);
+        drawPixel(xc + y, yc + x);
+        drawPixel(xc - y, yc + x);
+        drawPixel(xc + y, yc - x);
+        drawPixel(xc - y, yc - x);
+      }
+
+      drawBtn.addEventListener("click", () => {
+        const xc = parseInt(xcInput.value);
+        const yc = parseInt(ycInput.value);
+        const radius = parseInt(radiusInput.value);
+
+        drawCircleBresenham(xc, yc, radius);
+      });
+
+      window.addEventListener("load", () => {
+        drawCircleBresenham(
+          parseInt(xcInput.value),
+          parseInt(ycInput.value),
+          parseInt(radiusInput.value)
+        );
+      });
+    </script>
+  </body>
+</html>

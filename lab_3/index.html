@@ -1,149 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LAB 3</title>
-  </head>
-  <body>
-    <h1>Модифицированный алгоритм с «затравкой»</h1>
+<style>
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+</style>
 
-    <label>
-      <span>Цвет</span>
-      <input type="color" placeholder="Цвет" />
-    </label>
+<div>
+  <a href="./1.html">Естественный алгоритм рисования прямой</a>
+  <a href="./2.html">Алгоритм Брезенхема рисования прямой</a>
+  <a href="./3.html">Алгоритм Брезенхема рисования окружности</a>
+</div>
 
-    <br />
-    <br />
-    <button>Очистить рисунок</button>
+<br />
+<br />
 
-    <br />
-    <br />
-
-    <canvas style="border: 1px solid black; cursor: crosshair"></canvas>
-
-    <script>
-      const canvas = document.querySelector("canvas");
-      const ctx = canvas.getContext("2d");
-
-      const colorInput = document.querySelector("input[type='color']");
-      colorInput.value = "#0000ff";
-      let selectedColor = colorInput.value;
-
-      function makeMap() {
-        return [
-          [0, 0, 0, 0, 1, 0, 1, 0, 0, 1],
-          [1, 0, 0, 1, 0, 0, 1, 0, 0, 0],
-          [1, 0, 0, 1, 0, 0, 1, 0, 0, 0],
-          [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-          [1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
-          [1, 0, 0, 1, 1, 1, 1, 0, 0, 1],
-        ];
-      }
-
-      let map = makeMap();
-
-      const scale = 50;
-
-      canvas.width = map[0].length * scale;
-      canvas.height = map.length * scale;
-
-      function drawPixel(x, y, color) {
-        ctx.fillStyle = color;
-        ctx.fillRect(x * scale, y * scale, scale, scale);
-        // border
-        ctx.strokeStyle = "gray";
-        ctx.strokeRect(x * scale, y * scale, scale, scale);
-      }
-
-      function renderMap() {
-        for (let i = 0; i < map.length; i++) {
-          for (let j = 0; j < map[i].length; j++) {
-            drawPixel(
-              j,
-              i,
-              map[i][j] === 0 ? "white" : map[i][j] === 1 ? "black" : map[i][j]
-            );
-          }
-        }
-      }
-
-      renderMap();
-
-      const stack = [];
-
-      function paint(startX, startY) {
-        const currentColor = map[startY][startX];
-        const width = map[0].length;
-        const height = map.length;
-        stack.push({ x: startX, y: startY });
-
-        if (currentColor === selectedColor) {
-          return;
-        }
-
-        while (stack.length > 0) {
-          const { x, y } = stack.pop();
-
-          if (map[y][x] !== currentColor) continue;
-
-          let left = x;
-          let right = x;
-
-          while (left >= 0 && map[y][left] === currentColor) {
-            left--;
-          }
-
-          while (right < width && map[y][right] === currentColor) {
-            right++;
-          }
-
-          for (let i = left + 1; i < right; i++) {
-            map[y][i] = selectedColor;
-          }
-
-          function checkLine(y) {
-            if (y < 0 || y >= height) {
-              return;
-            }
-
-            for (let x = left; x < right; x++) {
-              if (
-                (map[y][x] === currentColor &&
-                  map[y][x + 1] !== currentColor) ||
-                (x == right - 1 && map[y]?.[x] === currentColor)
-              ) {
-                stack.push({ x, y });
-              }
-            }
-          }
-
-          checkLine(y - 1);
-          checkLine(y + 1);
-
-          console.log([...stack]);
-        }
-
-        renderMap();
-      }
-
-      canvas.addEventListener("click", (e) => {
-        const x = Math.floor(e.offsetX / scale);
-        const y = Math.floor(e.offsetY / scale);
-        paint(x, y);
-      });
-
-      const button = document.querySelector("button");
-
-      button.addEventListener("click", () => {
-        map = makeMap();
-        renderMap();
-      });
-
-      colorInput.addEventListener("input", (e) => {
-        selectedColor = e.target.value;
-      });
-    </script>
-  </body>
-</html>
+<div>
+  <a href="./4.html">Алгоритм "короеда"</a>
+  <a href="./5.html">Заполнение области узором</a>
+  <a href="./mod.html">Модифицированный алгоритм с затравкой</a>
+</div>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Алгоритм рисования прямой</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .input-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      canvas {
+        border: 1px solid #000;
+      }
+      button {
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Естественный алгоритм рисования прямой</h1>
+
+      <div class="input-group">
+        <label>(x1, y1):</label>
+        <input type="number" id="x0" placeholder="x1" value="50" />
+        <input type="number" id="y0" placeholder="y1" value="50" />
+      </div>
+
+      <div class="input-group">
+        <label>(x2, y2)</label>
+        <input type="number" id="x1" placeholder="x2" value="200" />
+        <input type="number" id="y1" placeholder="y2" value="150" />
+      </div>
+
+      <button id="drawBtn">Нарисовать прямую</button>
+
+      <canvas id="canvas" width="600" height="400"></canvas>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const x0Input = document.getElementById("x0");
+      const y0Input = document.getElementById("y0");
+      const x1Input = document.getElementById("x1");
+      const y1Input = document.getElementById("y1");
+      const drawBtn = document.getElementById("drawBtn");
+
+      function drawPixel(x, y) {
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      function drawLineNatural(x0, y0, x1, y1) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "black";
+
+        if (Math.abs(x1 - x0) < Math.abs(y1 - y0)) {
+          if (y0 > y1) {
+            [y0, y1] = [y1, y0];
+            [x0, x1] = [x1, x0];
+          }
+
+          const a = (x1 - x0) / (y1 - y0);
+          const b = x0 - a * y0;
+
+          for (let y = y0; y <= y1; y++) {
+            const x = Math.round(a * y + b);
+            drawPixel(x, y);
+          }
+        } else {
+          if (x0 > x1) {
+            [x0, x1] = [x1, x0];
+            [y0, y1] = [y1, y0];
+          }
+
+          const a = (y1 - y0) / (x1 - x0);
+          const b = y0 - a * x0;
+
+          for (let x = x0; x <= x1; x++) {
+            const y = Math.round(a * x + b);
+            drawPixel(x, y);
+          }
+        }
+      }
+
+      drawBtn.addEventListener("click", () => {
+        const x0 = parseInt(x0Input.value);
+        const y0 = parseInt(y0Input.value);
+        const x1 = parseInt(x1Input.value);
+        const y1 = parseInt(y1Input.value);
+
+        drawLineNatural(x0, y0, x1, y1);
+      });
+
+      window.addEventListener("load", () => {
+        drawLineNatural(
+          parseInt(x0Input.value),
+          parseInt(y0Input.value),
+          parseInt(x1Input.value),
+          parseInt(y1Input.value)
+        );
+      });
+    </script>
+  </body>
+</html>

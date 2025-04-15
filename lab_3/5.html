@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pattern Tiling in Polygon</title>
+  </head>
+  <body>
+    <canvas
+      id="myCanvas"
+      width="300"
+      height="300"
+      style="border: 1px solid black"
+    ></canvas>
+    <script>
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const pattern = [
+        [0, 1, 0],
+        [0, 0, 1],
+        [0, 1, 0],
+      ];
+      const patternWidth = 3;
+      const patternHeight = 3;
+
+      const scale = 20;
+
+      const points = [
+        { x: 150, y: 50 },
+        { x: 250, y: 120 },
+        { x: 200, y: 250 },
+        { x: 100, y: 250 },
+        { x: 50, y: 120 },
+      ];
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      ctx.clip();
+
+      for (let y = 0; y < canvas.height; y += scale) {
+        for (let x = 0; x < canvas.width; x += scale) {
+          const patternX = (x / scale) % patternWidth;
+          const patternY = (y / scale) % patternHeight;
+          const value = pattern[patternY][patternX];
+
+          ctx.fillStyle = value === 1 ? "black" : "white";
+          ctx.fillRect(x, y, scale, scale);
+        }
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    </script>
+  </body>
+</html>

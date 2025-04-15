@@ -198,8 +198,18 @@
                 const pixelY = y + i;
                 const idx = pixelY * original.width + pixelX;
 
-                const matrixValue = M[i + N][j + N];
-                sum += grayscale[idx] * matrixValue;
+                if (
+                  x + i >= 0 &&
+                  x + i < original.width &&
+                  y + j >= 0 &&
+                  y + j < original.height
+                ) {
+                  const matrixValue = M[i + N][j + N];
+                  sum += grayscale[idx] * matrixValue;
+                } else {
+                  const matrixValue = M[i][j];
+                  sum += grayscale[idx] * matrixValue;
+                }
               }
             }
 
