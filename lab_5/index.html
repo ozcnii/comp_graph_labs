@@ -1,20 +1,11 @@
-<!--
-x = (R + r * cos(a)) * sin(b)
-y = (R + r * cos(a)) * cos(b)
-z = r * sin(a)
-
-R – расстояние от центра образующей окружности до оси вращения
-r – радиус образующей окружности
-
-a ∈ [0, 2pi]
-b ∈ [-pi,pi]
--->
 <!DOCTYPE html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>6203, Фокин Евгений Андреевич - Лабораторная работа №5</title>
+    <title>
+      6203, Фокин Евгений Андреевич - Лабораторная работа №5 (Тёмная тема)
+    </title>
     <style>
       body {
         margin: 0;
@@ -23,11 +14,12 @@ b ∈ [-pi,pi]
         display: flex;
         flex-direction: column;
         align-items: center;
-        background-color: #f0f0f0;
+        background-color: #121212;
+        color: #e0e0e0;
       }
       canvas {
-        background-color: white;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #1e1e1e;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         margin-bottom: 20px;
       }
       .controls {
@@ -38,26 +30,40 @@ b ∈ [-pi,pi]
         justify-content: center;
       }
       .control-group {
-        background-color: white;
+        background-color: #1e1e1e;
         padding: 15px;
         border-radius: 5px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
       }
-      h1 {
-        margin-bottom: 20px;
+      h1,
+      h3 {
+        margin: 0 0 10px;
+        color: #e0e0e0;
       }
       button {
         padding: 5px 10px;
         margin: 0 5px;
         cursor: pointer;
+        background-color: #333;
+        color: #e0e0e0;
+        border: none;
+        border-radius: 3px;
+        transition: background-color 0.2s;
+      }
+      button:hover {
+        background-color: #444;
       }
       input[type="range"] {
         width: 150px;
+        accent-color: #bb86fc;
       }
     </style>
   </head>
   <body>
-    <h1>Лабораторная работа №5<br />Группа 6203, Фокин Евгений Андреевич</h1>
+    <h1>
+      Лабораторная работа №5<br />Группа 6203, Фокин Евгений Андреевич (Тёмная
+      тема)
+    </h1>
     <div class="controls">
       <div class="control-group">
         <h3>Вращение</h3>
@@ -72,7 +78,6 @@ b ∈ [-pi,pi]
         </div>
         <button id="resetRotation">Сбросить вращение</button>
       </div>
-
       <div class="control-group">
         <h3>Положение</h3>
         <div>
@@ -89,7 +94,6 @@ b ∈ [-pi,pi]
         </div>
         <button id="resetPosition">Сбросить положение</button>
       </div>
-
       <div class="control-group">
         <h3>Масштаб и параметры</h3>
         <div>
@@ -97,119 +101,116 @@ b ∈ [-pi,pi]
           <input type="range" id="scale" min="10" max="200" value="100" />
         </div>
         <div>
-          R (основной радиус):
-          <input type="range" id="paramR" min="50" max="200" value="100" />
+          R: <input type="range" id="paramR" min="50" max="200" value="100" />
         </div>
         <div>
-          r (радиус трубы):
-          <input type="range" id="paramr" min="10" max="100" value="40" />
+          r: <input type="range" id="paramr" min="10" max="100" value="40" />
         </div>
         <button id="resetScale">Сбросить масштаб</button>
       </div>
     </div>
-
     <canvas id="canvas" width="800" height="600"></canvas>
-
     <script>
-      // Инициализация canvas
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Параметры тора
-      let R = 100; // Основной радиус
-      let r = 40; // Радиус трубы
-      let scale = 1;
-      let rotationX = 0;
-      let rotationY = 0;
-      let rotationZ = 0;
-      let positionX = 0;
-      let positionY = 0;
-      let positionZ = 0;
-
-      // Параметры проекции
-      const fov = 500; // Угол обзора
-      const cameraZ = 1000; // Положение камеры
-
-      // Элементы управления
-      const rotateXSlider = document.getElementById("rotateX");
-      const rotateYSlider = document.getElementById("rotateY");
-      const rotateZSlider = document.getElementById("rotateZ");
-      const positionXSlider = document.getElementById("positionX");
-      const positionYSlider = document.getElementById("positionY");
-      const positionZSlider = document.getElementById("positionZ");
-      const scaleSlider = document.getElementById("scale");
-      const paramRSlider = document.getElementById("paramR");
-      const paramrSlider = document.getElementById("paramr");
-
-      document.getElementById("resetRotation").addEventListener("click", () => {
-        rotationX = rotationY = rotationZ = 0;
-        rotateXSlider.value = rotateYSlider.value = rotateZSlider.value = 0;
-        drawTorus();
-      });
-
-      document.getElementById("resetPosition").addEventListener("click", () => {
-        positionX = positionY = positionZ = 0;
-        positionXSlider.value =
-          positionYSlider.value =
-          positionZSlider.value =
-            0;
-        drawTorus();
-      });
-
-      document.getElementById("resetScale").addEventListener("click", () => {
+      let R = 100,
+        r = 40,
         scale = 1;
-        R = 100;
-        r = 40;
-        scaleSlider.value = 100;
-        paramRSlider.value = 100;
-        paramrSlider.value = 40;
-        drawTorus();
-      });
+      let rotationX = 0,
+        rotationY = 0,
+        rotationZ = 0;
+      let positionX = 0,
+        positionY = 0,
+        positionZ = 0;
 
-      rotateXSlider.addEventListener("input", (e) => {
-        rotationX = parseInt(e.target.value);
-        drawTorus();
-      });
+      const projectionMatrix = [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 1],
+      ];
 
-      rotateYSlider.addEventListener("input", (e) => {
-        rotationY = parseInt(e.target.value);
-        drawTorus();
-      });
+      function bindControls() {
+        const rotateXSlider = document.getElementById("rotateX");
+        const rotateYSlider = document.getElementById("rotateY");
+        const rotateZSlider = document.getElementById("rotateZ");
+        const positionXSlider = document.getElementById("positionX");
+        const positionYSlider = document.getElementById("positionY");
+        const positionZSlider = document.getElementById("positionZ");
+        const scaleSlider = document.getElementById("scale");
+        const paramRSlider = document.getElementById("paramR");
+        const paramrSlider = document.getElementById("paramr");
 
-      rotateZSlider.addEventListener("input", (e) => {
-        rotationZ = parseInt(e.target.value);
-        drawTorus();
-      });
+        // Обработчики событий
+        rotateXSlider.addEventListener("input", (e) => {
+          rotationX = +e.target.value;
+          drawTorus();
+        });
+        rotateYSlider.addEventListener("input", (e) => {
+          rotationY = +e.target.value;
+          drawTorus();
+        });
+        rotateZSlider.addEventListener("input", (e) => {
+          rotationZ = +e.target.value;
+          drawTorus();
+        });
 
-      positionXSlider.addEventListener("input", (e) => {
-        positionX = parseInt(e.target.value);
-        drawTorus();
-      });
+        positionXSlider.addEventListener("input", (e) => {
+          positionX = +e.target.value;
+          drawTorus();
+        });
+        positionYSlider.addEventListener("input", (e) => {
+          positionY = +e.target.value;
+          drawTorus();
+        });
+        positionZSlider.addEventListener("input", (e) => {
+          positionZ = +e.target.value;
+          drawTorus();
+        });
 
-      positionYSlider.addEventListener("input", (e) => {
-        positionY = parseInt(e.target.value);
-        drawTorus();
-      });
+        scaleSlider.addEventListener("input", (e) => {
+          scale = +e.target.value / 100;
+          drawTorus();
+        });
+        paramRSlider.addEventListener("input", (e) => {
+          R = +e.target.value;
+          drawTorus();
+        });
+        paramrSlider.addEventListener("input", (e) => {
+          r = +e.target.value;
+          drawTorus();
+        });
 
-      positionZSlider.addEventListener("input", (e) => {
-        positionZ = parseInt(e.target.value);
-        drawTorus();
-      });
+        document
+          .getElementById("resetRotation")
+          .addEventListener("click", () => {
+            rotationX = rotationY = rotationZ = 0;
+            rotateXSlider.value = rotateYSlider.value = rotateZSlider.value = 0;
+            drawTorus();
+          });
+        document
+          .getElementById("resetPosition")
+          .addEventListener("click", () => {
+            positionX = positionY = positionZ = 0;
+            positionXSlider.value =
+              positionYSlider.value =
+              positionZSlider.value =
+                0;
+            drawTorus();
+          });
+        document.getElementById("resetScale").addEventListener("click", () => {
+          scale = 1;
+          R = 100;
+          r = 40;
+          scaleSlider.value = 100;
+          paramRSlider.value = 100;
+          paramrSlider.value = 40;
+          drawTorus();
+        });
+      }
 
-      scaleSlider.addEventListener("input", (e) => {
-        scale = parseInt(e.target.value) / 100;
-        drawTorus();
-      });
-
-      paramRSlider.addEventListener("input", (e) => {
-        R = parseInt(e.target.value);
-        drawTorus();
-      });
-
-      paramrSlider.addEventListener("input", (e) => {
-        r = parseInt(e.target.value);
-        drawTorus();
-      });
+      bindControls();
 
       function multiplyMatrix(a, b) {
         const result = [];
@@ -217,27 +218,18 @@ b ∈ [-pi,pi]
           result[i] = [];
           for (let j = 0; j < 4; j++) {
             let sum = 0;
-            for (let k = 0; k < 4; k++) {
-              sum += a[i][k] * b[k][j];
-            }
+            for (let k = 0; k < 4; k++) sum += a[i][k] * b[k][j];
             result[i][j] = sum;
           }
         }
         return result;
       }
 
-      function multiplyMatrixVector(m, v) {
-        const result = [0, 0, 0, 0];
-        for (let i = 0; i < 4; i++) {
-          for (let j = 0; j < 4; j++) {
-            result[i] += m[i][j] * v[j];
-          }
-        }
-        return result;
+      function multiplyVec(m, v) {
+        return m.map((row) => row.reduce((s, val, idx) => s + val * v[idx], 0));
       }
 
-      // Матрицы преобразований
-      function getRotationXMatrix(angle) {
+      function getRotationX(angle) {
         const rad = (angle * Math.PI) / 180;
         return [
           [1, 0, 0, 0],
@@ -247,7 +239,7 @@ b ∈ [-pi,pi]
         ];
       }
 
-      function getRotationYMatrix(angle) {
+      function getRotationY(angle) {
         const rad = (angle * Math.PI) / 180;
         return [
           [Math.cos(rad), 0, Math.sin(rad), 0],
@@ -257,7 +249,7 @@ b ∈ [-pi,pi]
         ];
       }
 
-      function getRotationZMatrix(angle) {
+      function getRotationZ(angle) {
         const rad = (angle * Math.PI) / 180;
         return [
           [Math.cos(rad), -Math.sin(rad), 0, 0],
@@ -267,7 +259,7 @@ b ∈ [-pi,pi]
         ];
       }
 
-      function getTranslationMatrix(x, y, z) {
+      function getTranslation(x, y, z) {
         return [
           [1, 0, 0, x],
           [0, 1, 0, y],
@@ -276,7 +268,7 @@ b ∈ [-pi,pi]
         ];
       }
 
-      function getScaleMatrix(s) {
+      function getScale(s) {
         return [
           [s, 0, 0, 0],
           [0, s, 0, 0],
@@ -285,146 +277,68 @@ b ∈ [-pi,pi]
         ];
       }
 
-      // Функция для создания точек тора
-      function createTorusPoints() {
-        const points = [];
-        const alphaSteps = 20; // Количество шагов по alpha
-        const betaSteps = 30; // Количество шагов по beta
-
+      function createTorus(alphaSteps = 20, betaSteps = 30) {
+        const pts = [];
         for (let i = 0; i <= alphaSteps; i++) {
-          const alpha = (i / alphaSteps) * Math.PI * 2;
-          const circlePoints = [];
-
+          const a = (i / alphaSteps) * 2 * Math.PI;
+          const row = [];
           for (let j = 0; j <= betaSteps; j++) {
-            const beta = (j / betaSteps) * Math.PI * 2;
-
-            // Параметрические уравнения тора
-            const x = (R + r * Math.cos(alpha)) * Math.cos(beta);
-            const y = (R + r * Math.cos(alpha)) * Math.sin(beta);
-            const z = r * Math.sin(alpha);
-
-            circlePoints.push([x, y, z, 1]);
+            const b = (j / betaSteps) * 2 * Math.PI;
+            row.push([
+              (R + r * Math.cos(a)) * Math.cos(b),
+              (R + r * Math.cos(a)) * Math.sin(b),
+              r * Math.sin(a),
+              1,
+            ]);
           }
-
-          points.push(circlePoints);
+          pts.push(row);
         }
-
-        return points;
+        return pts;
       }
 
-      // Функция перспективной проекции
-      function projectPoint(x, y, z) {
-        // Применяем перспективу
-        const factor = fov / (fov + z + cameraZ);
-        const projectedX = x * factor + canvas.width / 2;
-        const projectedY = y * factor + canvas.height / 2;
-
-        // Возвращаем координаты и коэффициент глубины (для эффектов)
-        return {
-          x: projectedX,
-          y: projectedY,
-          depth: z,
-        };
-      }
-
-      // Функция для отрисовки тора
       function drawTorus() {
-        // Очищаем canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#1e1e1e";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const torus = createTorus();
 
-        // Создаем точки тора
-        const torusPoints = createTorusPoints();
+        let M = getScale(scale);
 
-        // Создаем матрицу преобразований
-        let transformationMatrix = [
-          [1, 0, 0, 0],
-          [0, 1, 0, 0],
-          [0, 0, 1, 0],
-          [0, 0, 0, 1],
-        ];
+        M = multiplyMatrix(M, getRotationX(rotationX));
+        M = multiplyMatrix(M, getRotationY(rotationY));
+        M = multiplyMatrix(M, getRotationZ(rotationZ));
+        M = multiplyMatrix(M, getTranslation(positionX, positionY, positionZ));
 
-        // Применяем преобразования в порядке: масштаб -> вращение -> перемещение
-        transformationMatrix = multiplyMatrix(
-          transformationMatrix,
-          getScaleMatrix(scale)
-        );
-        transformationMatrix = multiplyMatrix(
-          transformationMatrix,
-          getRotationXMatrix(rotationX)
-        );
-        transformationMatrix = multiplyMatrix(
-          transformationMatrix,
-          getRotationYMatrix(rotationY)
-        );
-        transformationMatrix = multiplyMatrix(
-          transformationMatrix,
-          getRotationZMatrix(rotationZ)
-        );
-        transformationMatrix = multiplyMatrix(
-          transformationMatrix,
-          getTranslationMatrix(positionX, positionY, positionZ)
+        const projected = torus.map((row) =>
+          row.map((pt) => {
+            const t = multiplyVec(M, pt);
+            const p = multiplyVec(projectionMatrix, [t[0], t[1], t[2], 1]);
+            return {
+              x: p[0] + canvas.width / 2,
+              y: p[1] + canvas.height / 2,
+              depth: t[2],
+            };
+          })
         );
 
-        // Преобразуем и проектируем точки
-        const projectedPoints = [];
-
-        for (let i = 0; i < torusPoints.length; i++) {
-          const circleProjected = [];
-          for (let j = 0; j < torusPoints[i].length; j++) {
-            // Применяем преобразования
-            const transformed = multiplyMatrixVector(
-              transformationMatrix,
-              torusPoints[i][j]
-            );
-
-            // Применяем перспективную проекцию
-            const projected = projectPoint(
-              transformed[0],
-              transformed[1],
-              transformed[2]
-            );
-
-            circleProjected.push(projected);
-          }
-          projectedPoints.push(circleProjected);
-        }
-
-        // Рисуем тор
-        ctx.strokeStyle = "blue";
+        ctx.strokeStyle = "#bb86fc";
         ctx.lineWidth = 1;
-
-        // Рисуем кольца вдоль alpha
-        for (let i = 0; i < projectedPoints.length; i++) {
+        projected.forEach((row) => {
           ctx.beginPath();
-          for (let j = 0; j < projectedPoints[i].length; j++) {
-            const { x, y } = projectedPoints[i][j];
-            if (j === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-          }
+          row.forEach((p, i) =>
+            i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)
+          );
           ctx.stroke();
-        }
-
-        // Рисуем кольца вдоль beta
-        for (let j = 0; j < projectedPoints[0].length; j++) {
+        });
+        for (let j = 0; j < projected[0].length; j++) {
           ctx.beginPath();
-          for (let i = 0; i < projectedPoints.length; i++) {
-            const { x, y } = projectedPoints[i][j];
-            if (i === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-          }
+          projected.forEach((row, i) =>
+            i ? ctx.lineTo(row[j].x, row[j].y) : ctx.moveTo(row[j].x, row[j].y)
+          );
           ctx.stroke();
         }
       }
 
-      // Начальная отрисовка
       drawTorus();
     </script>
   </body>
